@@ -54,35 +54,35 @@ pkgs.stdenvNoCC.mkDerivation {
     test -x ${converter}
     for mode in rich sparse; do
       root="$NIX_BUILD_TOP/fixture-$mode"
-      out="$NIX_BUILD_TOP/capture/$mode"
-      mkdir -p "$out"
-      "$helper/qualification-driver" "$root" "$mode" > "$out/fixture.stdout" 2> "$out/fixture.stderr"
-      cp "$root/old-state/store.db" "$out/source-before.db"
-      cp "$root/old-startup.rkyv" "$out/source-before.rkyv"
-      LOJIX_ORACLE_SCHEMA=old "$helper/raw-snapshot-oracle" SNAPSHOT "$root/old-state/store.db" > "$out/old-snapshot.json"
+      capture_dir="$NIX_BUILD_TOP/capture/$mode"
+      mkdir -p "$capture_dir"
+      "$helper/qualification-driver" "$root" "$mode" > "$capture_dir/fixture.stdout" 2> "$capture_dir/fixture.stderr"
+      cp "$root/old-state/store.db" "$capture_dir/source-before.db"
+      cp "$root/old-startup.rkyv" "$capture_dir/source-before.rkyv"
+      LOJIX_ORACLE_SCHEMA=old "$helper/raw-snapshot-oracle" SNAPSHOT "$root/old-state/store.db" > "$capture_dir/old-snapshot.json"
       set +e
-      ${converter} "$root/old-startup.rkyv" "$root/new-startup.rkyv" "$root/destination" > "$out/converter.stdout" 2> "$out/converter.stderr"
+      ${converter} "$root/old-startup.rkyv" "$root/new-startup.rkyv" "$root/destination" > "$capture_dir/converter.stdout" 2> "$capture_dir/converter.stderr"
       status=$?
       set -e
-      printf '%s\n' "$status" > "$out/converter.status"
+      printf '%s\n' "$status" > "$capture_dir/converter.status"
       test "$status" -eq 0
-      LOJIX_ORACLE_SCHEMA=new "$helper/raw-snapshot-oracle" SNAPSHOT "$root/destination/store.db" > "$out/destination-snapshot.json"
-      cp "$root/old-state/store.db" "$out/source-after.db"
-      cp "$root/old-startup.rkyv" "$out/source-after.rkyv"
-      cmp "$out/source-before.db" "$out/source-after.db"
-      cmp "$out/source-before.rkyv" "$out/source-after.rkyv"
-      ${pkgs.python3}/bin/python ${../oracle/v5_v6.py} --converter-source-revision ${revision} --source "$out/old-snapshot.json" --destination "$out/destination-snapshot.json" --migration-json "$root/destination/migration.json" --migration-committed-json "$root/destination/migration.committed.json" --converter-stdout "$out/converter.stdout" --source-before "$out/source-before.db" --source-after "$out/source-after.db" --destination-db "$root/destination/store.db" --old-archive "$out/source-before.rkyv" --new-archive "$root/new-startup.rkyv" > "$out/oracle.json"
-      cp "$root/destination/migration.json" "$out/migration.json"
-      cp "$root/destination/migration.committed.json" "$out/migration-committed.json"
+      LOJIX_ORACLE_SCHEMA=new "$helper/raw-snapshot-oracle" SNAPSHOT "$root/destination/store.db" > "$capture_dir/destination-snapshot.json"
+      cp "$root/old-state/store.db" "$capture_dir/source-after.db"
+      cp "$root/old-startup.rkyv" "$capture_dir/source-after.rkyv"
+      cmp "$capture_dir/source-before.db" "$capture_dir/source-after.db"
+      cmp "$capture_dir/source-before.rkyv" "$capture_dir/source-after.rkyv"
+      ${pkgs.python3}/bin/python ${../oracle/v5_v6.py} --converter-source-revision ${revision} --source "$capture_dir/old-snapshot.json" --destination "$capture_dir/destination-snapshot.json" --migration-json "$root/destination/migration.json" --migration-committed-json "$root/destination/migration.committed.json" --converter-stdout "$capture_dir/converter.stdout" --source-before "$capture_dir/source-before.db" --source-after "$capture_dir/source-after.db" --destination-db "$root/destination/store.db" --old-archive "$capture_dir/source-before.rkyv" --new-archive "$root/new-startup.rkyv" > "$capture_dir/oracle.json"
+      cp "$root/destination/migration.json" "$capture_dir/migration.json"
+      cp "$root/destination/migration.committed.json" "$capture_dir/migration-committed.json"
     done
   '';
 
   installPhase = ''
     mkdir -p "$out"
-    cp -R "$NIX_BUILD_TOP/capture"/. "$out/"
-    printf '%s\n' "$helperSource" > "$out/helper-source"
-    printf '%s\n' '${converter}' > "$out/converter-path"
-    sha256sum ${converter} > "$out/converter-sha256"
-    printf '%s\n' '${revision}' > "$out/converter-source-revision"
+    cp -R "$NIX_BUILD_TOP/capture"/. "$capture_dir/"
+    printf '%s\n' "$helperSource" > "$capture_dir/helper-source"
+    printf '%s\n' '${converter}' > "$capture_dir/converter-path"
+    sha256sum ${converter} > "$capture_dir/converter-sha256"
+    printf '%s\n' '${revision}' > "$capture_dir/converter-source-revision"
   '';
 }
