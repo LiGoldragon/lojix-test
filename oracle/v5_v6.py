@@ -118,6 +118,7 @@ def main():
     parser.add_argument("--source-before"); parser.add_argument("--source-after")
     parser.add_argument("--old-archive"); parser.add_argument("--new-archive")
     parser.add_argument("--destination-db")
+    parser.add_argument("--converter-source-revision", default="6be34e8141f2bef26510004197d3256a762380a1")
     args = parser.parse_args()
     source = load(args.source); destination = load(args.destination)
     sf, se, source_roster = verify_snapshot(source); df, de, destination_roster = verify_snapshot(destination)
@@ -125,7 +126,7 @@ def main():
     if final.get("source_schema") != 5 or final.get("destination_schema") != 6: fail("receipt schema transition")
     if final.get("old_runtime_pin") != "3fc95f0cf4eaf14ff62898c4783ebbc670fdf96b": fail("old producer pin")
     if final.get("new_runtime_source_baseline") != "94d8b69a546560e9d3c8300c6114e8dac7df67ea": fail("new baseline")
-    if final.get("converter_source_revision") != "6be34e8141f2bef26510004197d3256a762380a1": fail("converter revision")
+    if final.get("converter_source_revision") != args.converter_source_revision: fail("converter revision")
     if args.source_before:
         if final.get("source_sha256") != sha(args.source_before): fail("receipt source database digest")
     if args.destination_db and final.get("destination_sha256") != sha(args.destination_db): fail("receipt destination database digest")
