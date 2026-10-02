@@ -14,8 +14,15 @@ let
     src = helperSource;
     cargoLock = "${helperSource}/migration-v5-v6/Cargo.lock";
   };
-  converterPackage = /nix/store/l04p8r0d38mp7nkp94b5wzk4vq9pwcr6-lojix-migrate-v5-v6-0.1.0;
-  converter = "${converterPackage}/bin/lojix-migrate-v5-v6";
+  # The immutable target must already be realized locally.  The helpers below
+  # are recreated from the original pinned schema source only because the
+  # retained helper artifact is unavailable; this is not a producer build.
+  converterPackage = "/nix/store/l04p8r0d38mp7nkp94b5wzk4vq9pwcr6-lojix-migrate-v5-v6-0.1.0";
+  converter = builtins.appendContext "${converterPackage}/bin/lojix-migrate-v5-v6" {
+    "${converterPackage}" = {
+      path = true;
+    };
+  };
   revision = "cea66fd53a72c13f4e03ca04a67c8a4336df1ac2";
 in
 pkgs.stdenvNoCC.mkDerivation {
@@ -73,7 +80,7 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     mkdir -p "$out"
     cp -R "$NIX_BUILD_TOP/capture"/. "$out/"
-    printf '%s\n' '$helperSource' > "$out/helper-source"
+    printf '%s\n' "$helperSource" > "$out/helper-source"
     printf '%s\n' '${converter}' > "$out/converter-path"
     sha256sum ${converter} > "$out/converter-sha256"
     printf '%s\n' '${revision}' > "$out/converter-source-revision"
