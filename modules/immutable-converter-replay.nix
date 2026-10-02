@@ -79,10 +79,10 @@ pkgs.stdenvNoCC.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out"
-    cp -R "$NIX_BUILD_TOP/capture"/. "$capture_dir/"
-    printf '%s\n' "$helperSource" > "$capture_dir/helper-source"
-    printf '%s\n' '${converter}' > "$capture_dir/converter-path"
-    sha256sum ${converter} > "$capture_dir/converter-sha256"
-    printf '%s\n' '${revision}' > "$capture_dir/converter-source-revision"
+    cp -R "$NIX_BUILD_TOP/capture"/. "$out/"
+    printf '%s\n' "$helperSource" > "$out/helper-source"
+    printf '%s\n' '${converter}' > "$out/converter-path"
+    sha256sum ${converter} > "$out/converter-sha256"
+    printf '%s\n' '${revision}' > "$out/converter-source-revision"
   '';
 }
